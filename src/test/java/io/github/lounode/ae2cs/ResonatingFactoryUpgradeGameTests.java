@@ -28,8 +28,11 @@ import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
+import com.mojang.authlib.GameProfile;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @GameTestHolder("ae2cs")
 @PrefixGameTestTemplate(false)
@@ -39,6 +42,30 @@ public class ResonatingFactoryUpgradeGameTests {
     public static void aggregator(GameTestHelper helper) {
         verifyFactory(helper, new ResonatingAggregatorFactoryBlockEntity(BlockPos.ZERO,
                 AECSBlocks.RESONATING_AGGREGATOR_FACTORY_BLOCK.get().defaultBlockState()));
+    }
+
+    @GameTest(template = "empty")
+    public static void aggregatorFactoryReturnsInputFluidToBuckets(GameTestHelper helper) {
+        var pos = new BlockPos(1, 1, 1);
+        helper.setBlock(pos, AECSBlocks.RESONATING_AGGREGATOR_FACTORY_BLOCK.get());
+        var host = (ResonatingAggregatorFactoryBlockEntity) helper.getBlockEntity(pos);
+        var player = FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.randomUUID(), "fluid_tank_test"));
+        var menu = new ResonatingAggregatorFactoryMenu(1, player.getInventory(), host);
+        var input = host.getFluidTanks().input();
+
+        menu.setCarried(new ItemStack(Items.LAVA_BUCKET));
+        menu.receiveClientAction("fill_fluid_input", "null");
+        helper.assertTrue(input.getFluidAmount() == 1000 && menu.getCarried().is(Items.BUCKET),
+                "A filled bucket deposits lava into the input tank");
+
+        menu.setCarried(new ItemStack(Items.BUCKET, 2));
+        menu.receiveClientAction("fill_fluid_input", "null");
+        helper.assertTrue(input.isEmpty(), "An empty bucket takes lava back out of the input tank");
+        helper.assertTrue(ItemStack.matches(menu.getCarried(), new ItemStack(Items.BUCKET)),
+                "The remaining empty bucket stays on the cursor");
+        helper.assertTrue(player.getInventory().countItem(Items.LAVA_BUCKET) == 1,
+                "The filled bucket goes into the player's inventory");
+        helper.succeed();
     }
 
     @GameTest(template = "empty")

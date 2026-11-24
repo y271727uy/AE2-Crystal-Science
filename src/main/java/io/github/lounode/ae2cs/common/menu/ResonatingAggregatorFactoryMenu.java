@@ -11,6 +11,7 @@ import appeng.menu.guisync.GuiSync;
 
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.fluids.FluidActionResult;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
 
@@ -39,7 +40,7 @@ public class ResonatingAggregatorFactoryMenu extends ResonatingFactoryMenu<Reson
 
     public ResonatingAggregatorFactoryMenu(int id, Inventory playerInventory, ResonatingAggregatorFactoryBlockEntity host) {
         super(AECSMenus.RESONATING_AGGREGATOR_FACTORY_MENU.get(), id, playerInventory, host);
-        registerClientAction(FILL_FLUID_INPUT_ACTION, this::fillFluidInput);
+        registerClientAction(FILL_FLUID_INPUT_ACTION, this::interactWithFluidInput);
         registerClientAction(DRAIN_FLUID_OUTPUT_ACTION, this::drainFluidOutput);
     }
 
@@ -70,14 +71,31 @@ public class ResonatingAggregatorFactoryMenu extends ResonatingFactoryMenu<Reson
         sendClientAction(DRAIN_FLUID_OUTPUT_ACTION);
     }
 
-    private void fillFluidInput() {
-        var result = FluidUtil.tryEmptyContainer(getCarried(), getHost().getFluidTanks().input(), Integer.MAX_VALUE, getPlayer(), true);
-        if (result.isSuccess()) setCarried(result.getResult());
+    private void interactWithFluidInput() {
+        var tank = getHost().getFluidTanks().input();
+        var result = FluidUtil.tryEmptyContainer(getCarried(), tank, Integer.MAX_VALUE, getPlayer(), true);
+        if (!result.isSuccess()) {
+            result = FluidUtil.tryFillContainer(getCarried(), tank, Integer.MAX_VALUE, getPlayer(), true);
+        }
+        applyFluidContainerResult(result);
     }
 
     private void drainFluidOutput() {
         var result = FluidUtil.tryFillContainer(getCarried(), getHost().getFluidTanks().output(), Integer.MAX_VALUE, getPlayer(), true);
-        if (result.isSuccess()) setCarried(result.getResult());
+        applyFluidContainerResult(result);
+    }
+
+    private void applyFluidContainerResult(FluidActionResult result) {
+        if (!result.isSuccess()) return;
+
+        ItemStack remaining = getCarried().copy();
+        remaining.shrink(1);
+        if (remaining.isEmpty()) {
+            setCarried(result.getResult());
+        } else {
+            setCarried(remaining);
+            getPlayer().getInventory().placeItemBackInInventory(result.getResult());
+        }
     }
 
     @Override

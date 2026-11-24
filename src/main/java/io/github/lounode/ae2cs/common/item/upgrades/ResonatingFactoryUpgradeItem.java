@@ -59,7 +59,6 @@ public class ResonatingFactoryUpgradeItem extends Item {
         if (machine == AECSBlocks.CRYSTAL_PULVERIZER_BLOCK.get()) return AECSBlocks.RESONATING_PULVERIZER_FACTORY_BLOCK.get();
         if (machine == AECSBlocks.CIRCUIT_ETCHER_BLOCK.get()) return AECSBlocks.RESONATING_CIRCUIT_ETCHER_FACTORY_BLOCK.get();
         if (machine == AECSBlocks.CRYSTAL_AGGREGATOR_BLOCK.get()) return AECSBlocks.RESONATING_AGGREGATOR_FACTORY_BLOCK.get();
-        if (machine == AECSBlocks.CRYSTAL_GROWTH_ACCELERATOR_BLOCK.get()) return AECSBlocks.RESONATING_GROWTH_FACTORY_BLOCK.get();
         return null;
     }
 
